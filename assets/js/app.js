@@ -434,68 +434,19 @@ $("#import-queries-btn").click(function() {
 });
 
 $("#download-csv-btn").click(function() {
-  $("#table").tableExport({
-    type: "csv",
-    fileName: "data"
-  });
-  $("[data-toggle='dropdown']").parent().removeClass("open");
-  return false;
-});
-
-$("#download-excel-btn").click(function() {
-  $("#table").tableExport({
-    type: "excel",
-    fileName: "data"
-  });
-  $("[data-toggle='dropdown']").parent().removeClass("open");
-  return false;
-});
-
-$("#download-pdf-btn").click(function() {
-  $("#table").tableExport({
-    type: "pdf",
-    fileName: "data",
-    jspdf: {
-      format: "bestfit",
-      margins: {
-        left: 20,
-        right: 10,
-        top: 20,
-        bottom: 20
-      },
-      autotable: {
-        extendWidth: false,
-        overflow: "linebreak"
-      }
-    }
-  });
+  var data = $("#table").bootstrapTable("getData");
+  var csv = Papa.unparse(data);
+  var blob = new Blob([csv], {type: "text/csv"});
+  saveAs(blob, "records.csv");
   $("[data-toggle='dropdown']").parent().removeClass("open");
   return false;
 });
 
 $("#download-json-btn").click(function() {
-  $("#table").tableExport({
-    type: "json",
-    fileName: "data"
-  });
-  $("[data-toggle='dropdown']").parent().removeClass("open");
-  return false;
-});
-
-$("#download-sql-btn").click(function() {
-  $("#table").tableExport({
-    type: "sql",
-    fileName: "data"
-  });
-  $("[data-toggle='dropdown']").parent().removeClass("open");
-  return false;
-});
-
-$("#download-xml-btn").click(function() {
-  $("#table").tableExport({
-    type: "xml",
-    fileName: "data"
-  });
+  var data = $("#table").bootstrapTable("getData");
+  var json = JSON.stringify(data);
+  var blob = new Blob([json], {type: "application/json"});
+  saveAs(blob, "records.json");
   $("[data-toggle='dropdown']").parent().removeClass("open");
   return false;
 });
