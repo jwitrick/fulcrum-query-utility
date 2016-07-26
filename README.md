@@ -8,4 +8,4 @@ This lightweight, responsive web application uses utilizes the Fulcrum Query API
 - Queries saved to localStorage for convenience
 - Ability to save, delete, import, and export frequently used queries
 - Client-side table sorting, searching, and column toggling via [Bootstrap Table](http://bootstrap-table.wenzhixin.net.cn/)
-- Export data to CSV, EXCEL, PDF, JSON, SQL, XML via the [jQuery tableExport](https://github.com/kayalshri/tableExport.jquery.plugin) plugin
+- Export data to CSV & JSON
