@@ -299,7 +299,7 @@ function mapData() {
       features.push({
         "type": "Feature",
         "properties": properties,
-        "geometry": wellknown.parse(row[currentGeometryColumn])
+        "geometry": row[currentGeometryColumn]
       });
     }
   });
