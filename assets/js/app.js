@@ -9,6 +9,9 @@ $(document).ready(function() {
 });
 
 var editor;
+var currentFields = null;
+var currentRows = null;
+var currentGeometryColumn = null;
 
 var mapLayer = MQ.mapLayer();
 
@@ -155,11 +158,13 @@ function executeQuery() {
   var query = editor.getDoc().getValue();
   if (query.length > 0) {
     $("#loading").show();
-    var url = "https://api.fulcrumapp.com/api/v2/query/?format=csv&token=" + atob(sessionStorage.getItem("fulcrum_query_token")) + "&q=" + encodeURIComponent(query);
+    var url = "https://api.fulcrumapp.com/api/v2/query/?format=json&token=" + atob(sessionStorage.getItem("fulcrum_query_token")) + "&q=" + encodeURIComponent(query);
     $.ajax({
       url: url,
-      success: papaParseIt,
+      success: parseQueryResponse,
       error: function (jqXHR, textStatus, error) {
+        currentFields = null;
+        currentRows = null;
         $("#loading").hide();
         $("#error-alert").show();
         $("#error-message").html(jqXHR.responseText);
@@ -223,94 +228,87 @@ function importQueries() {
   }
 }
 
-function papaParseIt(csvString) {
-  Papa.parse(csvString, {
-    skipEmptyLines: true,
-    header: true,
-    dynamicTyping: true,
-    complete: function(results) {
-      var columns = [];
-      $.each(results.meta.fields, function (index, value) {
-        columns.push({
-          field: value,
-          title: value,
-          align: "left",
-          valign: "middle",
-          sortable: true
-        });
-      });
-      // Loop through data values and apply custom formatter
-      $.each(results.data, function (row_index, row) {
-        $.each(row, function (value_index, value) {
-          if (typeof value == "string" && (value.indexOf("http") === 0 || value.indexOf("https") === 0)) {
-            $.each(columns, function (column_index, column) {
-              if (column.field == value_index) {
-                columns[column_index].formatter = urlFormatter;
-              }
-            });
+function parseQueryResponse(json) {
+  var columns = [];
+
+  currentFields = json.fields;
+  currentRows = json.rows;
+  currentGeometryColumn = null;
+
+  json.fields.forEach(function(value, index) {
+    if (value.type === 'geometry' && currentGeometryColumn == null) {
+      currentGeometryColumn = value.name;
+    }
+
+    columns.push({
+      field: value.name,
+      title: value.name,
+      align: "left",
+      valign: "middle",
+      sortable: true
+    });
+  });
+
+  for (var i = 0; i < 10; i++) {
+    if (json.rows[i]) {
+      for (var j = 0; j < json.fields.length; ++j) {
+        var field = json.fields[j];
+
+        if (field.type === 'string') {
+          if (json.rows[i][field.name] && json.rows[i][field.name].indexOf('http') === 0) {
+            columns[j].formatter = urlFormatter;
           }
-        });
-      });
-      $("#table").bootstrapTable("destroy");
-      $("#table").bootstrapTable({
-        data: results.data,
-        columns: columns,
-        cache: false,
-        height: "fit",
-        toolbar: "#toolbar",
-        showColumns: true,
-        showToggle: true,
-        search: true,
-        trimOnSearch: false,
-        striped: false,
-        onSearch: function (e) {
-          $("#feature-count").html($("#table").bootstrapTable("getData").length + " records");
         }
-      });
-      $("#table").bootstrapTable("resetView", {
-        height: $(window).height()-70
-      });
+      }
+    }
+  }
+
+  $("#table").bootstrapTable("destroy");
+  $("#table").bootstrapTable({
+    data: json.rows,
+    columns: columns,
+    cache: false,
+    height: "fit",
+    toolbar: "#toolbar",
+    showColumns: true,
+    showToggle: true,
+    search: true,
+    trimOnSearch: false,
+    striped: false,
+    onSearch: function (e) {
       $("#feature-count").html($("#table").bootstrapTable("getData").length + " records");
-      $("#toolbar").show();
-      $("#sqlModal").modal("hide");
-      $("#error-alert").hide();
-      $("#loading").hide();
     }
   });
+  $("#table").bootstrapTable("resetView", {
+    height: $(window).height()-70
+  });
+  $("#feature-count").html($("#table").bootstrapTable("getData").length + " records");
+  $("#toolbar").show();
+  $("#sqlModal").modal("hide");
+  $("#error-alert").hide();
+  $("#loading").hide();
 }
 
-function mapData(data) {
-  var longitude, latitude;
-  if (data[0]._longitude && data[0]._latitude) {
-    longitude = "_longitude";
-    latitude = "_latitude";
-  } else {
-    longitude = "longitude";
-    latitude = "latitude";
-  }
+function mapData() {
   var features = [];
-  $.each(data, function(index, record) {
-    var properties = {};
-    $.each(record, function(index, property) {
-      properties[index] = property;
-    });
-    features.push({
-      "type": "Feature",
-      "properties": properties,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          record[longitude],
-          record[latitude]
-        ]
-      }
-    });
+
+  currentRows.forEach(function(row) {
+    if (row[currentGeometryColumn]) {
+      var properties = Object.assign({}, row);
+
+      features.push({
+        "type": "Feature",
+        "properties": properties,
+        "geometry": row[currentGeometryColumn]
+      });
+    }
   });
 
   var geojson = {
     "type": "FeatureCollection",
     "features": features
   };
+
   points.clearLayers();
   points.addData(geojson);
   map.fitBounds(points.getBounds());
@@ -367,15 +365,14 @@ $("#about-btn").click(function() {
 });
 
 $("#map-btn").click(function() {
-  var data = $("#table").bootstrapTable("getData");
-  if (data && (data[0]._longitude && data[0]._latitude) || (data[0].longitude && data[0].latitude)) {
+  if (currentRows && currentGeometryColumn) {
     $("#mapModal").on("shown.bs.modal", function() {
       map.invalidateSize();
-      mapData(data);
+      mapData();
     });
     $("#mapModal").modal("show");
   } else {
-    alert("Table must include latitude & longitude columns");
+    alert("Table must include geometry column!");
   }
   $(".navbar-collapse.in").collapse("hide");
   return false;
