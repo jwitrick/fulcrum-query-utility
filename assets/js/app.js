@@ -267,6 +267,7 @@ function parseQueryResponse(json) {
   $("#table").bootstrapTable({
     data: json.rows,
     columns: columns,
+    undefinedText: "",
     cache: false,
     height: "fit",
     toolbar: "#toolbar",
