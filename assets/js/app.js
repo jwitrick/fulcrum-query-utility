@@ -236,7 +236,7 @@ function parseQueryResponse(json) {
   currentGeometryColumn = null;
 
   json.fields.forEach(function(value, index) {
-    if (value.type === 'geometry' && currentGeometryColumn == null) {
+    if (value.type === "geometry" && currentGeometryColumn === null) {
       currentGeometryColumn = value.name;
     }
 
@@ -254,8 +254,8 @@ function parseQueryResponse(json) {
       for (var j = 0; j < json.fields.length; ++j) {
         var field = json.fields[j];
 
-        if (field.type === 'string') {
-          if (json.rows[i][field.name] && json.rows[i][field.name].indexOf('http') === 0) {
+        if (field.type === "string") {
+          if (json.rows[i][field.name] && json.rows[i][field.name].indexOf("http") === 0) {
             columns[j].formatter = urlFormatter;
           }
         }
