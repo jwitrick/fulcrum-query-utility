@@ -318,7 +318,14 @@ var app = {
       });
 
       $("#download-csv-btn").click(function() {
-        var data = $("#table").bootstrapTable("getData");
+        var data = JSON.parse(JSON.stringify($("#table").bootstrapTable("getData")));
+        for (var i = 0; i < data.length; i++) {
+          for (var prop in data[i]) {
+            if ($.type(data[i][prop]) === "object") {
+              data[i][prop] = JSON.stringify(data[i][prop]);
+            }
+          }
+        }
         var csv = Papa.unparse(data);
         var blob = new Blob([csv], {type: "text/csv"});
         saveAs(blob, "records.csv");
@@ -436,6 +443,15 @@ var app = {
       }
     },
 
+    geomFormatter: function(value, row, index) {
+      if (value) {
+        return JSON.stringify(value);
+      }
+      else {
+        return "";
+      }
+    },
+
     parseQueryResponse: function(json) {
       var columns = [];
 
@@ -466,6 +482,8 @@ var app = {
               if (json.rows[i][field.name] && json.rows[i][field.name].indexOf("http") === 0) {
                 columns[j].formatter = app.queryModule.urlFormatter;
               }
+            } else if (field.type == "geometry") {
+              columns[j].formatter = app.queryModule.geomFormatter;
             }
           }
         }
