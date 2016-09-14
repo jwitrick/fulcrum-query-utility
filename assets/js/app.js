@@ -25,9 +25,9 @@ var app = {
       return false;
     });
 
-    $(window).resize(function () {
+    $(window).resize(function() {
       $("#table").bootstrapTable("resetView", {
-        height: $(window).height()-70
+        height: $(window).height() - 70
       });
     });
   },
@@ -86,8 +86,8 @@ var app = {
             alert("Incorrect credentials, please try again.");
           }
         },
-        success: function (data) {
-          contexts = $(data.user.contexts).sort(function(a,b) {
+        success: function(data) {
+          contexts = $(data.user.contexts).sort(function(a, b) {
             return a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1;
           });
           sessionStorage.setItem("fulcrum_query_token", btoa(contexts[0].api_token));
@@ -113,7 +113,7 @@ var app = {
         },
         success: function(data) {
           var options = "";
-          contexts = $(data.user.contexts).sort(function(a,b) {
+          contexts = $(data.user.contexts).sort(function(a, b) {
             return a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1;
           });
           $.each(contexts, function(index, context) {
@@ -158,7 +158,7 @@ var app = {
     mapLayer: MQ.mapLayer(),
 
     points: L.geoJson(null, {
-      pointToLayer: function (feature, latlng) {
+      pointToLayer: function(feature, latlng) {
         return L.marker(latlng, {
           icon: L.icon({
             iconUrl: "assets/img/map-marker.png",
@@ -170,7 +170,7 @@ var app = {
           riseOnHover: true
         });
       },
-      onEachFeature: function (feature, layer) {
+      onEachFeature: function(feature, layer) {
         if (feature.properties) {
           var attributes = [];
           $.each(feature.properties, function(index, property) {
@@ -208,7 +208,7 @@ var app = {
       }).addTo(app.mapModule.map);
     },
 
-    mapData: function () {
+    mapData: function() {
       var features = [];
 
       app.currentRows.forEach(function(row) {
@@ -246,13 +246,13 @@ var app = {
           skipEmptyLines: true,
           header: true,
           dynamicTyping: true,
-      		complete: function(results) {
+          complete: function(results) {
             localStorage.setItem("fulcrum_queries", JSON.stringify(results.data));
             app.queryModule.fetchQueries();
             app.editor.getDoc().setValue($("#saved-queries-select option:first-child").val());
             alert("Queries imported successfully!");
-      		}
-      	});
+          }
+        });
       });
 
       $("#sqlModal").on("shown.bs.modal", function(e) {
@@ -327,7 +327,9 @@ var app = {
           }
         }
         var csv = Papa.unparse(data);
-        var blob = new Blob([csv], {type: "text/csv"});
+        var blob = new Blob([csv], {
+          type: "text/csv"
+        });
         saveAs(blob, "records.csv");
         $("[data-toggle='dropdown']").parent().removeClass("open");
         return false;
@@ -336,20 +338,22 @@ var app = {
       $("#download-json-btn").click(function() {
         var data = $("#table").bootstrapTable("getData");
         var json = JSON.stringify(data);
-        var blob = new Blob([json], {type: "application/json"});
+        var blob = new Blob([json], {
+          type: "application/json"
+        });
         saveAs(blob, "records.json");
         $("[data-toggle='dropdown']").parent().removeClass("open");
         return false;
       });
     },
 
-    fetchQueries: function () {
+    fetchQueries: function() {
       if (localStorage.getItem("fulcrum_queries")) {
         var queries = JSON.parse(localStorage.getItem("fulcrum_queries"));
         queries = queries.filter(function(query) {
           return query.organization == $("#context-select option:selected").text();
         });
-        queries = queries.sort(function(a,b) {
+        queries = queries.sort(function(a, b) {
           return a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1;
         });
         $("#saved-queries-select").empty();
@@ -368,7 +372,7 @@ var app = {
         $.ajax({
           url: url,
           success: app.queryModule.parseQueryResponse,
-          error: function (jqXHR, textStatus, error) {
+          error: function(jqXHR, textStatus, error) {
             app.currentFields = null;
             app.currentRows = null;
             $("#loading").hide();
@@ -419,11 +423,13 @@ var app = {
 
     exportQueries: function() {
       var queries = JSON.parse(localStorage.getItem("fulcrum_queries"));
-      queries = queries.sort(function(a,b) {
+      queries = queries.sort(function(a, b) {
         return a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1;
       });
       var csv = Papa.unparse(queries);
-      var blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
+      var blob = new Blob([csv], {
+        type: "text/csv;charset=utf-8"
+      });
       saveAs(blob, "queries.csv");
     },
 
@@ -436,9 +442,8 @@ var app = {
 
     urlFormatter: function(value, row, index) {
       if (value && value.length > 0) {
-        return "<a href='"+value+"' target='_blank'>"+value+"</a>";
-      }
-      else {
+        return "<a href='" + value + "' target='_blank'>" + value + "</a>";
+      } else {
         return "";
       }
     },
@@ -446,8 +451,7 @@ var app = {
     geomFormatter: function(value, row, index) {
       if (value) {
         return JSON.stringify(value);
-      }
-      else {
+      } else {
         return "";
       }
     },
@@ -502,12 +506,12 @@ var app = {
         search: true,
         trimOnSearch: false,
         striped: false,
-        onSearch: function (e) {
+        onSearch: function(e) {
           $("#feature-count").html($("#table").bootstrapTable("getData").length + " records");
         }
       });
       $("#table").bootstrapTable("resetView", {
-        height: $(window).height()-70
+        height: $(window).height() - 70
       });
       $("#feature-count").html($("#table").bootstrapTable("getData").length + " records");
       $("#toolbar").show();
