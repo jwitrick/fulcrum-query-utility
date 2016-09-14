@@ -125,8 +125,7 @@ var app = {
           $("#context-select").val(atob(sessionStorage.getItem("fulcrum_query_token")));
           $("#loading").hide();
           app.queryModule.fetchQueries();
-          app.editor.getDoc().setValue("SELECT * FROM tables;");
-          app.queryModule.executeQuery();
+          app.queryModule.initialQuery();
         }
       });
     }
@@ -440,6 +439,26 @@ var app = {
       }
     },
 
+    initialQuery: function() {
+      var urlParams = {};
+      if (location.search) {
+        var parts = location.search.substring(1).split("&");
+        for (var i = 0; i < parts.length; i++) {
+          var nv = parts[i].split("=");
+          if (!nv[0]) continue;
+          urlParams[nv[0]] = nv[1] || true;
+        }
+      }
+      if (urlParams.q) {
+        app.editor.getDoc().setValue(decodeURI(urlParams.q));
+        $("#sqlModal").modal("show");
+        app.queryModule.executeQuery();
+      } else {
+        app.editor.getDoc().setValue("SELECT * FROM tables;");
+        app.queryModule.executeQuery();
+      }
+    },
+
     urlFormatter: function(value, row, index) {
       if (value && value.length > 0) {
         return "<a href='" + value + "' target='_blank'>" + value + "</a>";
@@ -515,7 +534,7 @@ var app = {
       });
       $("#feature-count").html($("#table").bootstrapTable("getData").length + " records");
       $("#toolbar").show();
-      $("#sqlModal").modal("hide");
+      //$("#sqlModal").modal("hide");
       $("#error-alert").hide();
       $("#loading").hide();
     }
