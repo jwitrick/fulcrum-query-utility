@@ -400,6 +400,12 @@ var app = {
             $("#error-alert").show();
             $("#error-message").html(jqXHR.responseText);
             $("#sqlModal").modal("show");
+          },
+          statusCode: {
+            401: function() {
+              alert("Session authorization expired");
+              app.authModule.logout();
+            }
           }
         });
       } else {
