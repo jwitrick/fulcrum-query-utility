@@ -12,6 +12,9 @@ body {
 #toolbar {
   display: none;
 }
+#delete-records-btn {
+  display: none;
+}
 #error-alert {
   display: none;
 }

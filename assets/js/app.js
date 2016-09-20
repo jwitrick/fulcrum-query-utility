@@ -344,6 +344,17 @@ var app = {
         $("[data-toggle='dropdown']").parent().removeClass("open");
         return false;
       });
+
+      $("#delete-records-btn").click(function() {
+        var count = $("#table").bootstrapTable("getSelections").length;
+        if (count > 0) {
+          var response = confirm("Are you absolutely sure you want to permanently delete " + count + (count == 1 ? " record" : " records") + " from the Fulcrum database?\nThis cannot be undone!");
+          if (response === true) {
+            app.queryModule.deleteRecords();
+          }
+        }
+        return false;
+      });
     },
 
     fetchQueries: function() {
@@ -467,6 +478,14 @@ var app = {
       }
     },
 
+    fulcrumFormatter: function(value, row, index) {
+      if (value && value.length > 0) {
+        return "<a href='https://web.fulcrumapp.com/records/" + value + "' target='_blank'>" + value + "</a>";
+      } else {
+        return "";
+      }
+    },
+
     geomFormatter: function(value, row, index) {
       if (value) {
         return JSON.stringify(value);
@@ -485,6 +504,22 @@ var app = {
       json.fields.forEach(function(value, index) {
         if (value.type === "geometry" && app.currentGeometryColumn === null) {
           app.currentGeometryColumn = value.name;
+          value.formatter = app.queryModule.geomFormatter;
+        }
+
+        else if (value.type == "string") {
+          for (var i = 0; i < json.rows.length; i++) {
+            if (json.rows[i][value.name] && json.rows[i][value.name].indexOf("http") === 0) {
+              value.formatter = app.queryModule.urlFormatter;
+            }
+          }
+          if (value.name == "_record_id" || value.name == "fulcrum_id") {
+            value.formatter = app.queryModule.fulcrumFormatter;
+            columns.push({
+              field: "state",
+              checkbox: true
+            });
+          }
         }
 
         columns.push({
@@ -492,28 +527,13 @@ var app = {
           title: value.name,
           align: "left",
           valign: "middle",
-          sortable: true
+          sortable: true,
+          formatter: value.formatter ? value.formatter : ""
         });
       });
 
-      for (var i = 0; i < 10; i++) {
-        if (json.rows[i]) {
-          for (var j = 0; j < json.fields.length; ++j) {
-            var field = json.fields[j];
-
-            if (field.type === "string") {
-              if (json.rows[i][field.name] && json.rows[i][field.name].indexOf("http") === 0) {
-                columns[j].formatter = app.queryModule.urlFormatter;
-              }
-            } else if (field.type == "geometry") {
-              columns[j].formatter = app.queryModule.geomFormatter;
-            }
-          }
-        }
-      }
-
-      $("#table").bootstrapTable("destroy");
-      $("#table").bootstrapTable({
+      $("#table").bootstrapTable();
+      $("#table").bootstrapTable("refreshOptions", {
         data: json.rows,
         columns: columns,
         undefinedText: "",
@@ -527,6 +547,23 @@ var app = {
         striped: false,
         onSearch: function(e) {
           $("#feature-count").html($("#table").bootstrapTable("getData").length + " records");
+        },
+        onCheck: function(e) {
+          $("#delete-records-btn").show();
+          $("#delete-count").html($("#table").bootstrapTable("getSelections").length);
+        },
+        onCheckAll: function(e) {
+          $("#delete-records-btn").show();
+          $("#delete-count").html($("#table").bootstrapTable("getSelections").length);
+        },
+        onUncheck: function(e) {
+          if ($("#table").bootstrapTable("getSelections").length === 0) {
+            $("#delete-records-btn").hide();
+          }
+          $("#delete-count").html($("#table").bootstrapTable("getSelections").length);
+        },
+        onUncheckAll: function(e) {
+          $("#delete-records-btn").hide();
         }
       });
       $("#table").bootstrapTable("resetView", {
@@ -537,6 +574,59 @@ var app = {
       //$("#sqlModal").modal("hide");
       $("#error-alert").hide();
       $("#loading").hide();
+    },
+
+    deleteRecords: function() {
+      var selections = $("#table").bootstrapTable("getSelections");
+      var id = null, field = null;
+      var deleted = 0;
+      var notfound = [];
+      var unauthorized = [];
+      $.each(selections, function(index, value) {
+        if (value._record_id) {
+          field = "_record_id";
+          id = value._record_id;
+        } else if (value.fulcrum_id) {
+          field = "fulcrum_id";
+          id = value._record_id;
+        }
+        $.ajax({
+          async: false,
+          url: "https://api.fulcrumapp.com/api/v2/records/" + id + ".json",
+          type: "DELETE",
+          contentType: "application/json",
+          dataType: "json",
+          headers: {
+            "X-ApiToken": atob(sessionStorage.getItem("fulcrum_query_token"))
+          },
+          statusCode: {
+            401: function() {
+              unauthorized.push(id);
+            },
+            404: function() {
+              notfound.push(id);
+            },
+            204: function() {
+              $("#table").bootstrapTable("remove", {
+                field: field,
+                values: [id]
+              });
+              $("#feature-count").html($("#table").bootstrapTable("getData").length + " records");
+              $("#delete-records-btn").hide();
+              deleted++;
+            }
+          }
+        });
+      });
+      if (unauthorized.length > 0) {
+        alert("You were unauthorized to delete the following records: " + unauthorized.join("\n"));
+      }
+      if (notfound.length > 0) {
+        alert("The following records were not found in your account: " + notfound.join("\n"));
+      }
+      if (deleted > 0) {
+        alert(deleted + (deleted == 1 ? " record" : " records") + " deleted!");
+      }
     }
   }
 
