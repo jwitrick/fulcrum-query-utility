@@ -378,9 +378,17 @@ var app = {
       var query = app.editor.getDoc().getValue();
       if (query.length > 0) {
         $("#loading").show();
-        var url = "https://api.fulcrumapp.com/api/v2/query/?format=json&token=" + atob(sessionStorage.getItem("fulcrum_query_token")) + "&q=" + encodeURIComponent(query);
         $.ajax({
-          url: url,
+          type: "POST",
+          url: "https://api.fulcrumapp.com/api/v2/query",
+          data: JSON.stringify({
+            "q": query,
+            "format": "json"
+          }),
+          contentType: "application/json",
+          headers: {
+            "X-ApiToken": atob(sessionStorage.getItem("fulcrum_query_token"))
+          },
           success: app.queryModule.parseQueryResponse,
           error: function(jqXHR, textStatus, error) {
             app.currentFields = null;
