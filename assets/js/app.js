@@ -90,7 +90,7 @@ var app = {
       var password = $("#password").val();
       $.ajax({
         type: "GET",
-        url: "http://localhost:3000/api/v2/users.json",
+        url: "https://api.fulcrumapp.com/api/v2/users.json",
         contentType: "application/json",
         dataType: "json",
         headers: {
@@ -272,7 +272,7 @@ var app = {
 
         $.ajax({
           type: "POST",
-          url: "http://localhost:3000/api/v2/authorizations",
+          url: "https://api.fulcrumapp.com/api/_private/authorizations",
           contentType: "application/json",
           data: JSON.stringify(data),
           dataType: "json",
@@ -389,7 +389,7 @@ var app = {
       var query = app.editor.getDoc().getValue();
       if (query.length > 0) {
         $("#loading").show();
-        var url = "http://localhost:3001/query/?format=json&token=" + atob(sessionStorage.getItem("fulcrum_query_token")) + "&q=" + encodeURIComponent(query);
+        var url = "https://api.fulcrumapp.com/api/v2/query/?format=json&token=" + atob(sessionStorage.getItem("fulcrum_query_token")) + "&q=" + encodeURIComponent(query);
         $.ajax({
           url: url,
           success: app.queryModule.parseQueryResponse,
