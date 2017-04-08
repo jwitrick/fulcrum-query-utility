@@ -266,7 +266,7 @@ var app = {
           authorization: {
             organization_id: $("#context-select").val(),
             note: "Fulcrum Query Utility",
-            timeout: 400
+            timeout: 60 * 60
           }
         };
 
