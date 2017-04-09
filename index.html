@@ -37,9 +37,6 @@
             <li><a href="#" data-toggle="collapse" data-target=".navbar-collapse.in" id="map-btn"><i class="glyphicon glyphicon-map-marker white"></i>&nbsp;&nbsp;Map</a></li>
           </ul>
           <form class="navbar-form navbar-right">
-            <div class="form-group navbardropdown">
-              <select class="form-control navbarselect" id="context-select"></select>
-            </div>
             <button type="button" class="btn btn-default hide" id="logout-btn"><i class="glyphicon glyphicon-log-out"></i>&nbsp;Sign Out</button>
           </form>
         </div>
@@ -171,7 +168,7 @@
               <span class="pull-right"><i class="fa fa-sign-in"></i></span></h4>
           </div>
           <div class="modal-body">
-            <form role="form">
+            <form role="form" class="login-form">
               <fieldset>
                 <div class="form-group">
                   <label for="name">Username</label>
@@ -181,11 +178,23 @@
                   <label for="email">Password</label>
                   <input type="password" class="form-control" id="password">
                 </div>
+                <div class="pull-right">
+                  <input type="submit" id="login-btn" value="Sign in" class="btn btn-primary">
+                </div>
               </fieldset>
             </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary pull-right" id="login-btn">&nbsp;Sign in</button>
+            <form role="form" class="org-picker-form">
+              <hr>
+              <fieldset>
+                <div class="form-group">
+                  <label for="context-select"></label>
+                  <select class="form-control" id="context-select"></select>
+                </div>
+                <div class="pull-right">
+                  <input type="submit" id="org-btn" value="Select organization" class="btn btn-primary">
+                </div>
+              </fieldset>
+            </form>
           </div>
         </div>
       </div>

@@ -47,10 +47,24 @@ var app = {
     },
 
     bindUIActions: function() {
-      $("#login-btn").click(function() {
-        app.authModule.login();
+      function validateCredentials () {
+        var $email = $("#email");
+        var $password = $("#password");
+
+        $email.val($email.val().trim());
+        $password.val($password.val().trim());
+
+        if (!($email.val().length && $password.val().length)) {
+          alert('Please enter email and password');
+        } else {
+          app.authModule.login();
+        }
         return false;
-      });
+      }
+
+      $("#login-btn").click(validateCredentials);
+
+      $(".login-form").on('submit', validateCredentials);
 
       $("#logout-btn").click(function() {
         app.authModule.logout();
@@ -66,7 +80,8 @@ var app = {
         $("#logout-btn").removeClass("hide");
         $("#loginModal").modal("hide");
         $(".modal-backdrop").css("opacity", "0.5");
-        app.authModule.fetchAccounts();
+        app.queryModule.fetchQueries();
+        app.queryModule.initialQuery();
       }
     },
 
@@ -87,11 +102,17 @@ var app = {
           }
         },
         success: function(data) {
+          $orgSelect = $("#context-select");
           contexts = $(data.user.contexts).sort(function(a, b) {
             return a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1;
           });
-          sessionStorage.setItem("fulcrum_query_token", btoa(contexts[0].api_token));
-          app.authModule.checkLogin();
+          contexts.each(function (i, context) {
+            $orgSelect.append($('<option></option>')
+                              .attr("value", context.id)
+                              .text(context.name));
+          });
+          $('.login-form :input').attr('disabled', 'disabled')
+          $(".org-picker-form").show();
         }
       });
     },
@@ -99,35 +120,6 @@ var app = {
     logout: function() {
       sessionStorage.removeItem("fulcrum_query_token");
       location.reload();
-    },
-
-    fetchAccounts: function() {
-      $("#loading").show();
-      $.ajax({
-        url: "https://api.fulcrumapp.com/api/v2/users.json",
-        type: "GET",
-        contentType: "application/json",
-        dataType: "json",
-        headers: {
-          "X-ApiToken": atob(sessionStorage.getItem("fulcrum_query_token"))
-        },
-        success: function(data) {
-          var options = "";
-          contexts = $(data.user.contexts).sort(function(a, b) {
-            return a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1;
-          });
-          $.each(contexts, function(index, context) {
-            options += "<option value='" + context.api_token + "'>" + context.name + "</option>";
-          });
-          $("#context-select").html(options);
-        },
-        complete: function() {
-          $("#context-select").val(atob(sessionStorage.getItem("fulcrum_query_token")));
-          $("#loading").hide();
-          app.queryModule.fetchQueries();
-          app.queryModule.initialQuery();
-        }
-      });
     }
   },
 
@@ -266,12 +258,42 @@ var app = {
         app.editor.getDoc().setValue($("#saved-queries-select").val());
       });
 
-      $("#context-select").change(function() {
-        sessionStorage.setItem("fulcrum_query_token", btoa(this.value));
-        app.editor.getDoc().setValue("SELECT * FROM tables;");
-        $("#saved-queries-select").val("SELECT * FROM tables;");
-        app.queryModule.executeQuery();
-        app.queryModule.fetchQueries();
+      $(".org-picker-form").submit(function () {
+        var username = $("#email").val();
+        var password = $("#password").val();
+
+        var data = {
+          authorization: {
+            organization_id: $("#context-select").val(),
+            note: "Fulcrum Query Utility",
+            timeout: 60 * 60
+          }
+        };
+
+        $.ajax({
+          type: "POST",
+          url: "https://api.fulcrumapp.com/api/_private/authorizations",
+          contentType: "application/json",
+          data: JSON.stringify(data),
+          dataType: "json",
+          headers: {
+            "Authorization": "Basic " + btoa(username + ":" + password)
+          },
+          statusCode: {
+            401: function() {
+              alert("Incorrect credentials, please try again.");
+            }
+          },
+          success: function(data) {
+            sessionStorage.setItem("fulcrum_query_token", btoa(data.authorization.token));
+            app.editor.getDoc().setValue("SELECT * FROM tables;");
+            $("#saved-queries-select").val("SELECT * FROM tables;");
+            app.queryModule.executeQuery();
+            app.queryModule.fetchQueries();
+            $("#loginModal").modal("hide");
+          }
+        });
+        return false;
       });
 
       $(".launch-query-btn").click(function() {
@@ -397,6 +419,12 @@ var app = {
             $("#error-alert").show();
             $("#error-message").html(jqXHR.responseText);
             $("#sqlModal").modal("show");
+          },
+          statusCode: {
+            401: function() {
+              alert("Session authorization expired");
+              app.authModule.logout();
+            }
           }
         });
       } else {

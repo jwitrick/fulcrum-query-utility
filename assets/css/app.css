@@ -88,3 +88,6 @@ td {
     display: none !important;
   }
 }
+.org-picker-form {
+  display: none;
+}
