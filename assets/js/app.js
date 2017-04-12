@@ -272,7 +272,7 @@ var app = {
 
         $.ajax({
           type: "POST",
-          url: "https://api.fulcrumapp.com/api/_private/authorizations",
+          url: "https://api.fulcrumapp.com/api/v2/authorizations",
           contentType: "application/json",
           data: JSON.stringify(data),
           dataType: "json",
