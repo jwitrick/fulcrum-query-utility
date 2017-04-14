@@ -39,6 +39,10 @@ var app = {
       lineWrapping: true,
       viewportMargin: Infinity
     });
+
+    app.editor.on("change", function(cm, change) {
+      sessionStorage.setItem("fulcrum_query_value", cm.getValue());
+    });
   },
 
   authModule: {
@@ -501,7 +505,13 @@ var app = {
         $("#sqlModal").modal("show");
         app.queryModule.executeQuery();
       } else {
-        app.editor.getDoc().setValue("SELECT * FROM tables;");
+        var savedQuery = sessionStorage.getItem("fulcrum_query_value");
+        if (savedQuery) {
+          app.editor.getDoc().setValue(savedQuery);
+        } else {
+          app.editor.getDoc().setValue("SELECT * FROM tables;");
+          $("#saved-queries-select").val("SELECT * FROM tables;");
+        }
         app.queryModule.executeQuery();
       }
     },
