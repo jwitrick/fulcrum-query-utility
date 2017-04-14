@@ -107,11 +107,11 @@ var app = {
             return a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1;
           });
           contexts.each(function (i, context) {
-            $orgSelect.append($('<option></option>')
+            $orgSelect.append($("<option></option>")
                               .attr("value", context.id)
                               .text(context.name));
           });
-          $('.login-form :input').attr('disabled', 'disabled')
+          $(".login-form :input").attr("disabled", "disabled");
           $(".org-picker-form").show();
         }
       });
