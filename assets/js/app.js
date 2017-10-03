@@ -113,7 +113,8 @@ var app = {
           contexts.each(function (i, context) {
             $orgSelect.append($("<option></option>")
                               .attr("value", context.id)
-                              .text(context.name));
+                              .prop("disabled", (context.role.can_manage_authorizations ? false : true))
+                              .text(context.name + (context.role.can_manage_authorizations ? "" : " (role does not have ability to manage API tokens)")));
           });
           $(".login-form :input").attr("disabled", "disabled");
           $(".org-picker-form").show();
