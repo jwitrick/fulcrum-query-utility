@@ -519,6 +519,7 @@ var app = {
 
     urlFormatter: function(value, row, index) {
       if (value && value.length > 0) {
+        value = value.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         return "<a href='" + value + "' target='_blank'>" + value + "</a>";
       } else {
         return "";
@@ -527,9 +528,17 @@ var app = {
 
     fulcrumFormatter: function(value, row, index) {
       if (value && value.length > 0) {
+        value = value.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         return "<a href='https://web.fulcrumapp.com/records/" + value + "' target='_blank'>" + value + "</a>";
       } else {
         return "";
+      }
+    },
+
+    stringFormatter: function(value, row, index) {
+      if (value && value.length > 0) {
+        value = value.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        return value;
       }
     },
 
@@ -566,6 +575,8 @@ var app = {
               field: "state",
               checkbox: true
             });
+          } else {
+            value.formatter = app.queryModule.stringFormatter;
           }
         }
 
