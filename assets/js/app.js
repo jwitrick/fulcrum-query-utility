@@ -50,6 +50,15 @@ var app = {
       this.bindUIActions();
     },
 
+    setupSession: function (token) {
+      sessionStorage.setItem("fulcrum_query_token", btoa(token));
+      app.editor.getDoc().setValue("SELECT * FROM tables;");
+      $("#saved-queries-select").val("SELECT * FROM tables;");
+      app.queryModule.executeQuery();
+      app.queryModule.fetchQueries();
+      $("#loginModal").modal("hide");
+    },
+
     bindUIActions: function() {
       function validateCredentials () {
         var $email = $("#email");
@@ -66,9 +75,35 @@ var app = {
         return false;
       }
 
+      function validateToken () {
+        var token = $("#token").val().trim();
+
+        $.ajax({
+          type: "GET",
+          url: "https://api.fulcrumapp.com/api/v2/forms.json?page=1&per_page=1&schema=false",
+          contentType: "application/json",
+          dataType: "json",
+          headers: {
+            "X-ApiToken": token
+          },
+          statusCode: {
+            401: function() {
+              alert("Invalid token, please try again.");
+            }
+          },
+          success: function(data) {
+            app.authModule.setupSession(token);
+          }
+        });
+
+        return false;
+      }
+
       $("#login-btn").click(validateCredentials);
 
       $(".login-form").on('submit', validateCredentials);
+
+      $(".token-form").on('submit', validateToken);
 
       $("#logout-btn").click(function() {
         app.authModule.logout();
@@ -290,12 +325,7 @@ var app = {
             }
           },
           success: function(data) {
-            sessionStorage.setItem("fulcrum_query_token", btoa(data.authorization.token));
-            app.editor.getDoc().setValue("SELECT * FROM tables;");
-            $("#saved-queries-select").val("SELECT * FROM tables;");
-            app.queryModule.executeQuery();
-            app.queryModule.fetchQueries();
-            $("#loginModal").modal("hide");
+            app.authModule.setupSession(data.authorization.token);
           }
         });
         return false;
