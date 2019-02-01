@@ -56,7 +56,6 @@ var app = {
       $("#saved-queries-select").val("SELECT * FROM tables;");
       app.queryModule.executeQuery();
       app.queryModule.fetchQueries();
-      $("#disclaimerModal").modal("show");
       $("#loginModal").modal("hide");
       $("#logout-btn").removeClass("hide");
     },
