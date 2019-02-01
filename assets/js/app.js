@@ -58,6 +58,7 @@ var app = {
       app.queryModule.fetchQueries();
       $("#disclaimerModal").modal("show");
       $("#loginModal").modal("hide");
+      $("#logout-btn").removeClass("hide");
     },
 
     bindUIActions: function() {
