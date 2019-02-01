@@ -57,6 +57,7 @@ var app = {
       app.queryModule.executeQuery();
       app.queryModule.fetchQueries();
       $("#loginModal").modal("hide");
+      $("#logout-btn").removeClass("hide");
     },
 
     bindUIActions: function() {
@@ -208,7 +209,7 @@ var app = {
             if (!property) {
               property = "";
             }
-            if (typeof property == "string" && (property.indexOf("http") === 0 || property.indexOf("https") === 0)) {
+            if (typeof property == "string" && (JSON.stringify(property).indexOf("http") === true || JSON.stringify(property).indexOf("https") === true)) {
               property = "<a href='" + property + "' target='_blank'>" + property + "</a>";
             }
             attributes.push("<strong>" + index + "</strong>: " + property);
@@ -595,7 +596,7 @@ var app = {
 
         else if (value.type == "string") {
           for (var i = 0; i < json.rows.length; i++) {
-            if (json.rows[i][value.name] && json.rows[i][value.name].indexOf("http") === 0) {
+            if (json.rows[i][value.name] && JSON.stringify(json.rows[i][value.name]).indexOf("http") === 0) {
               value.formatter = app.queryModule.urlFormatter;
             }
           }
