@@ -1,7 +1,7 @@
 $(document).ready(function() {
   app.init();
   app.authModule.init();
-  app.mapModule.init();
+  // app.mapModule.init();
   app.queryModule.init();
 });
 
@@ -164,107 +164,107 @@ var app = {
     }
   },
 
-  mapModule: {
-    init: function() {
-      this.buildMap();
-      this.addControls();
-      this.bindUIActions();
-    },
+  // mapModule: {
+  //   init: function() {
+  //     this.buildMap();
+  //     this.addControls();
+  //     this.bindUIActions();
+  //   },
 
-    bindUIActions: function() {
-      $("#map-btn").click(function() {
-        if (app.currentRows && app.currentGeometryColumn) {
-          $("#mapModal").on("shown.bs.modal", function() {
-            app.mapModule.map.invalidateSize();
-            app.mapModule.mapData();
-          });
-          $("#mapModal").modal("show");
-        } else {
-          alert("Table must include geometry column!");
-        }
-        $(".navbar-collapse.in").collapse("hide");
-        return false;
-      });
-    },
+  //   bindUIActions: function() {
+  //     $("#map-btn").click(function() {
+  //       if (app.currentRows && app.currentGeometryColumn) {
+  //         $("#mapModal").on("shown.bs.modal", function() {
+  //           app.mapModule.map.invalidateSize();
+  //           app.mapModule.mapData();
+  //         });
+  //         $("#mapModal").modal("show");
+  //       } else {
+  //         alert("Table must include geometry column!");
+  //       }
+  //       $(".navbar-collapse.in").collapse("hide");
+  //       return false;
+  //     });
+  //   },
 
-    mapLayer: MQ.mapLayer(),
+  //   mapLayer: MQ.mapLayer(),
 
-    points: L.geoJson(null, {
-      pointToLayer: function(feature, latlng) {
-        return L.marker(latlng, {
-          icon: L.icon({
-            iconUrl: "assets/img/map-marker.png",
-            iconSize: [30, 40],
-            iconAnchor: [15, 32],
-            popupAnchor: [0, -29]
-          }),
-          title: feature.properties._title ? feature.properties._title : "",
-          riseOnHover: true
-        });
-      },
-      onEachFeature: function(feature, layer) {
-        if (feature.properties) {
-          var attributes = [];
-          $.each(feature.properties, function(index, property) {
-            if (!property) {
-              property = "";
-            }
-            if (typeof property == "string" && (JSON.stringify(property).indexOf("http") === true || JSON.stringify(property).indexOf("https") === true)) {
-              property = "<a href='" + property + "' target='_blank'>" + property + "</a>";
-            }
-            attributes.push("<strong>" + index + "</strong>: " + property);
-          });
-          layer.bindPopup(attributes.join("<br>"), {
-            maxHeight: 200,
-            maxWidth: $("#map").width() / 2
-          });
-        }
-      }
-    }),
+  //   points: L.geoJson(null, {
+  //     pointToLayer: function(feature, latlng) {
+  //       return L.marker(latlng, {
+  //         icon: L.icon({
+  //           iconUrl: "assets/img/map-marker.png",
+  //           iconSize: [30, 40],
+  //           iconAnchor: [15, 32],
+  //           popupAnchor: [0, -29]
+  //         }),
+  //         title: feature.properties._title ? feature.properties._title : "",
+  //         riseOnHover: true
+  //       });
+  //     },
+  //     onEachFeature: function(feature, layer) {
+  //       if (feature.properties) {
+  //         var attributes = [];
+  //         $.each(feature.properties, function(index, property) {
+  //           if (!property) {
+  //             property = "";
+  //           }
+  //           if (typeof property == "string" && (JSON.stringify(property).indexOf("http") === true || JSON.stringify(property).indexOf("https") === true)) {
+  //             property = "<a href='" + property + "' target='_blank'>" + property + "</a>";
+  //           }
+  //           attributes.push("<strong>" + index + "</strong>: " + property);
+  //         });
+  //         layer.bindPopup(attributes.join("<br>"), {
+  //           maxHeight: 200,
+  //           maxWidth: $("#map").width() / 2
+  //         });
+  //       }
+  //     }
+  //   }),
 
-    buildMap: function() {
-      app.mapModule.map = L.map("map", {
-        layers: [app.mapModule.mapLayer, app.mapModule.points]
-      }).fitWorld();
-    },
+  //   buildMap: function() {
+  //     app.mapModule.map = L.map("map", {
+  //       layers: [app.mapModule.mapLayer, app.mapModule.points]
+  //     }).fitWorld();
+  //   },
 
-    addControls: function() {
-      L.control.layers({
-        "Streets": app.mapModule.mapLayer,
-        "Hybrid": MQ.hybridLayer(),
-        "Satellite": MQ.satelliteLayer(),
-        "Dark": MQ.darkLayer(),
-        "Light": MQ.lightLayer()
-      }, null, {
-        collapsed: false
-      }).addTo(app.mapModule.map);
-    },
+  //   addControls: function() {
+  //     L.control.layers({
+  //       "Streets": app.mapModule.mapLayer,
+  //       "Hybrid": MQ.hybridLayer(),
+  //       "Satellite": MQ.satelliteLayer(),
+  //       "Dark": MQ.darkLayer(),
+  //       "Light": MQ.lightLayer()
+  //     }, null, {
+  //       collapsed: false
+  //     }).addTo(app.mapModule.map);
+  //   },
 
-    mapData: function() {
-      var features = [];
+  //   mapData: function() {
+  //     var features = [];
 
-      app.currentRows.forEach(function(row) {
-        if (row[app.currentGeometryColumn]) {
-          var properties = Object.assign({}, row);
+  //     app.currentRows.forEach(function(row) {
+  //       if (row[app.currentGeometryColumn]) {
+  //         var properties = Object.assign({}, row);
 
-          features.push({
-            "type": "Feature",
-            "properties": properties,
-            "geometry": row[app.currentGeometryColumn]
-          });
-        }
-      });
+  //         features.push({
+  //           "type": "Feature",
+  //           "properties": properties,
+  //           "geometry": row[app.currentGeometryColumn]
+  //         });
+  //       }
+  //     });
 
-      var geojson = {
-        "type": "FeatureCollection",
-        "features": features
-      };
+  //     var geojson = {
+  //       "type": "FeatureCollection",
+  //       "features": features
+  //     };
 
-      app.mapModule.points.clearLayers();
-      app.mapModule.points.addData(geojson);
-      app.mapModule.map.fitBounds(app.mapModule.points.getBounds());
-    }
-  },
+  //     app.mapModule.points.clearLayers();
+  //     app.mapModule.points.addData(geojson);
+  //     app.mapModule.map.fitBounds(app.mapModule.points.getBounds());
+  //   }
+  // },
 
   queryModule: {
     init: function() {
