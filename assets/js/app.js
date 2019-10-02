@@ -541,7 +541,11 @@ var app = {
     urlFormatter: function(value, row, index) {
       if (value && value.length > 0) {
         value = value.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        return "<a href='" + value + "' target='_blank'>" + value + "</a>";
+        if (value.includes("type=photo")) {
+          return "<img src='" + value + "'/>";
+        } else {
+          return "<a href='" + value + "' target='_blank'>" + value + "</a>"; 
+        }
       } else {
         return "";
       }
@@ -584,12 +588,7 @@ var app = {
           value.formatter = app.queryModule.geomFormatter;
         }
 
-        else if (value.type == "string") {
-          for (var i = 0; i < json.rows.length; i++) {
-            if (json.rows[i][value.name] && JSON.stringify(json.rows[i][value.name]).indexOf("http") === 0) {
-              value.formatter = app.queryModule.urlFormatter;
-            }
-          }
+        else if (value.type == "string" || value.type == "unknown") {
           if (value.name == "_record_id" || value.name == "fulcrum_id") {
             value.formatter = app.queryModule.fulcrumFormatter;
             columns.push({
@@ -597,7 +596,16 @@ var app = {
               checkbox: true
             });
           } else {
-            value.formatter = app.queryModule.stringFormatter;
+            for (var i = 0; i < json.rows.length; i++) {
+              if (json.rows[i][value.name] && JSON.stringify(json.rows[i][value.name]).indexOf("http") === 1) {
+                value.formatter = app.queryModule.urlFormatter;
+                if (JSON.stringify(json.rows[i][value.name]).includes("type=photo")) {
+                  value.width = 250;
+                }
+              } else {
+                value.formatter = app.queryModule.stringFormatter;
+              }
+            }
           }
         }
 
@@ -607,6 +615,7 @@ var app = {
           align: "left",
           valign: "middle",
           sortable: true,
+          width: value.width ? value.width : "",
           formatter: value.formatter ? value.formatter : ""
         });
       });
