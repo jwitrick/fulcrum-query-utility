@@ -437,15 +437,23 @@ var app = {
           headers: {
             "X-ApiToken": atob(sessionStorage.getItem("fulcrum_query_token"))
           },
-          success: function (data, status, xhr) {
-            if(data.rows.length > 0){
-              if (page == 1) {
-                app.queryModule.executeQuery(page + 1, data);
-              } else {
+          success: function (data, status, xhr) {            
+            if (data.rows.length > 0) {
+              if (result && result.rows) {
                 data.rows.forEach(x => result.rows.push(x));
-                app.queryModule.executeQuery(page + 1, result);
+                if (data.rows.length == 10000) {
+                  app.queryModule.executeQuery(page + 1, result);
+                } else {
+                  app.queryModule.parseQueryResponse(result);
+                }
+              } else {
+                if (data.rows.length == 10000) {
+                  app.queryModule.executeQuery(page + 1, data);
+                } else {
+                  app.queryModule.parseQueryResponse(data);
+                }
               }
-            } else {
+            } else if (result && result.rows) {
               app.queryModule.parseQueryResponse(result);
             }
           },
