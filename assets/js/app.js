@@ -54,7 +54,7 @@ var app = {
       sessionStorage.setItem("fulcrum_query_token", btoa(token));
       app.editor.getDoc().setValue("SELECT * FROM tables;");
       $("#saved-queries-select").val("SELECT * FROM tables;");
-      app.queryModule.executeQuery();
+      app.queryModule.executeQuery(1, {});
       app.queryModule.fetchQueries();
       $("#loginModal").modal("hide");
       $("#logout-btn").removeClass("hide");
@@ -328,7 +328,7 @@ var app = {
       });
 
       $("#execute-query-btn").click(function() {
-        app.queryModule.executeQuery();
+        app.queryModule.executeQuery(1, {});
         return false;
       });
 
@@ -422,13 +422,13 @@ var app = {
       }
     },
 
-    executeQuery: function() {
+    executeQuery: function(page, result) {
       var query = app.editor.getDoc().getValue();
       if (query.length > 0) {
         $("#loading").show();
         $.ajax({
           type: "POST",
-          url: "https://api.fulcrumapp.com/api/v2/query",
+          url: "https://api.fulcrumapp.com/api/v2/query?per_page=10000&page=" + page,
           data: JSON.stringify({
             "q": query,
             "format": "json"
@@ -437,7 +437,26 @@ var app = {
           headers: {
             "X-ApiToken": atob(sessionStorage.getItem("fulcrum_query_token"))
           },
-          success: app.queryModule.parseQueryResponse,
+          success: function (data, status, xhr) {            
+            if (data.rows.length > 0) {
+              if (result && result.rows) {
+                data.rows.forEach(x => result.rows.push(x));
+                if (data.rows.length == 10000) {
+                  app.queryModule.executeQuery(page + 1, result);
+                } else {
+                  app.queryModule.parseQueryResponse(result);
+                }
+              } else {
+                if (data.rows.length == 10000) {
+                  app.queryModule.executeQuery(page + 1, data);
+                } else {
+                  app.queryModule.parseQueryResponse(data);
+                }
+              }
+            } else if (result && result.rows) {
+              app.queryModule.parseQueryResponse(result);
+            }
+          },
           error: function(jqXHR, textStatus, error) {
             app.currentFields = null;
             app.currentRows = null;
@@ -525,7 +544,7 @@ var app = {
       if (urlParams.q) {
         app.editor.getDoc().setValue(decodeURI(urlParams.q));
         $("#sqlModal").modal("show");
-        app.queryModule.executeQuery();
+        app.queryModule.executeQuery(1, {});
       } else {
         var savedQuery = sessionStorage.getItem("fulcrum_query_value");
         if (savedQuery) {
@@ -534,7 +553,7 @@ var app = {
           app.editor.getDoc().setValue("SELECT * FROM tables;");
           $("#saved-queries-select").val("SELECT * FROM tables;");
         }
-        app.queryModule.executeQuery();
+        app.queryModule.executeQuery(1, {});
       }
     },
 
@@ -623,6 +642,11 @@ var app = {
       $("#table").bootstrapTable();
       $("#table").bootstrapTable("refreshOptions", {
         data: json.rows,
+        virtualScroll: true,
+        pagination: true,
+        pageSize: 250,
+        pageList: [100, 250, 500, 1000],
+        paginationUseIntermediate: true,
         columns: columns,
         undefinedText: "",
         cache: false,
