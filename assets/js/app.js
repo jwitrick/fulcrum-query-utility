@@ -595,7 +595,6 @@ var app = {
     },
 
     parseQueryResponse: function(json) {
-      console.log(json)
       var columns = [];
 
       app.currentFields = json.fields;
