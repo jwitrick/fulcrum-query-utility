@@ -437,7 +437,7 @@ var app = {
           headers: {
             "X-ApiToken": atob(sessionStorage.getItem("fulcrum_query_token"))
           },
-          success: function (data, status, xhr) {           
+          success: function (data, status, xhr) {     
             if (data.rows.length > 0) {
               if (result && result.rows) {
                 data.rows.forEach(x => result.rows.push(x));
@@ -453,8 +453,8 @@ var app = {
                   app.queryModule.parseQueryResponse(data);
                 }
               }
-            } else if (data && data.rows) {
-              app.queryModule.parseQueryResponse(data);
+            } else if ((data && data.rows) || (result && result.rows)) {
+              app.queryModule.parseQueryResponse(data && result);
             }
           },
           error: function(jqXHR, textStatus, error) {
@@ -638,7 +638,6 @@ var app = {
           formatter: value.formatter ? value.formatter : ""
         });
       });
-
       $("#table").bootstrapTable();
       $("#table").bootstrapTable("refreshOptions", {
         data: json.rows,
