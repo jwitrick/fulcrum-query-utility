@@ -78,10 +78,11 @@ var app = {
 
       function validateToken () {
         var token = $("#token").val().trim();
+        var instance = $("#instance").val();
 
         $.ajax({
           type: "GET",
-          url: "https://api.fulcrumapp.com/api/v2/forms.json?page=1&per_page=1&schema=false",
+          url: `${instance}/forms.json?page=1&per_page=1&schema=false`,
           contentType: "application/json",
           dataType: "json",
           headers: {
@@ -128,9 +129,10 @@ var app = {
     login: function() {
       var username = $("#email").val();
       var password = $("#password").val();
+      var instance = $("#instance").val();
       $.ajax({
         type: "GET",
-        url: "https://api.fulcrumapp.com/api/v2/users.json",
+        url: `${instance}/users.json`,
         contentType: "application/json",
         dataType: "json",
         headers: {
@@ -292,6 +294,7 @@ var app = {
       $(".org-picker-form").submit(function () {
         var username = $("#email").val();
         var password = $("#password").val();
+        var instance = $("#instance").val();
 
         var data = {
           authorization: {
@@ -303,7 +306,7 @@ var app = {
 
         $.ajax({
           type: "POST",
-          url: "https://api.fulcrumapp.com/api/v2/authorizations",
+          url: `${instance}/authorizations`,
           contentType: "application/json",
           data: JSON.stringify(data),
           dataType: "json",
@@ -424,11 +427,12 @@ var app = {
 
     executeQuery: function(page, result) {
       var query = app.editor.getDoc().getValue();
+      var instance = $("#instance").val();
       if (query.length > 0) {
         $("#loading").show();
         $.ajax({
           type: "POST",
-          url: "https://api.fulcrumapp.com/api/v2/query?per_page=10000&page=" + page,
+          url: `${instance}/query?per_page=10000&page=` + page,
           data: JSON.stringify({
             "q": query,
             "format": "json"
@@ -680,6 +684,7 @@ var app = {
     },
 
     deleteRecords: function() {
+      var instance = $("#instance").val();
       var selections = $("#table").bootstrapTable("getSelections");
       var id = null, field = null;
       var deleted = 0;
@@ -695,7 +700,7 @@ var app = {
         }
         $.ajax({
           async: false,
-          url: "https://api.fulcrumapp.com/api/v2/records/" + id + ".json",
+          url: `${instance}/records/${id}.json`,
           type: "DELETE",
           contentType: "application/json",
           dataType: "json",
