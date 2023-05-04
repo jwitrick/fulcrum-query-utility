@@ -406,6 +406,17 @@ var app = {
         }
         return false;
       });
+
+      $("#report-records-btn").click(function() {
+        var count = $("#table").bootstrapTable("getSelections").length;
+        if (count > 0) {
+          var response = confirm("Are you sure you want to run reports for " + count + (count == 1 ? " record" : " records") + "?");
+          if (response === true) {
+            app.queryModule.runReports();
+          }
+        }
+        return false;
+      });
     },
 
     fetchQueries: function() {
@@ -610,6 +621,9 @@ var app = {
               field: "state",
               checkbox: true
             });
+            if (json.rows.length > 0) {
+              app.queryModule.fetchReportTemplates(json.rows[0]._record_id);
+            }
           } else {
             for (var i = 0; i < json.rows.length; i++) {
               if (json.rows[i][value.name] && JSON.stringify(json.rows[i][value.name]).indexOf("http") === 1) {
@@ -658,19 +672,30 @@ var app = {
         onCheck: function(e) {
           $("#delete-records-btn").show();
           $("#delete-count").html($("#table").bootstrapTable("getSelections").length);
+          $("#report-records-btn").show();
+          $("#report-count").html($("#table").bootstrapTable("getSelections").length);
+          $("#report-template").css('display', 'inline-block');
         },
         onCheckAll: function(e) {
           $("#delete-records-btn").show();
           $("#delete-count").html($("#table").bootstrapTable("getSelections").length);
+          $("#report-records-btn").show();
+          $("#report-count").html($("#table").bootstrapTable("getSelections").length);
+          $("#report-template").css('display', 'inline-block');
         },
         onUncheck: function(e) {
           if ($("#table").bootstrapTable("getSelections").length === 0) {
             $("#delete-records-btn").hide();
+            $("#report-records-btn").hide();
+            $("#report-template").hide();
           }
           $("#delete-count").html($("#table").bootstrapTable("getSelections").length);
+          $("#report-count").html($("#table").bootstrapTable("getSelections").length);
         },
         onUncheckAll: function(e) {
           $("#delete-records-btn").hide();
+          $("#report-records-btn").hide();
+          $("#report-template").hide();
         }
       });
       $("#table").bootstrapTable("resetView", {
@@ -735,7 +760,135 @@ var app = {
       if (deleted > 0) {
         alert(deleted + (deleted == 1 ? " record" : " records") + " deleted!");
       }
+    },
+
+    fetchReportTemplates: async (id) => {
+      var instance = $("#instance").val();
+
+      const recordJSON = await fetch(`${instance}/records/${id}.json`, {
+        headers: {
+          "X-ApiToken": atob(sessionStorage.getItem("fulcrum_query_token"))
+        },
+      }).then(resp => resp.json());
+
+      const formJSON = await fetch(`${instance}/forms/${recordJSON.record.form_id}.json`, {
+        headers: {
+          "X-ApiToken": atob(sessionStorage.getItem("fulcrum_query_token"))
+        },
+      }).then(resp => resp.json());
+
+      const templates = formJSON.form.report_templates;
+
+      $('#report-template-select').html('<option value="">-- Default template --</option>');
+
+      for (const template of templates) {
+        $('#report-template-select').append(`<option value="${template.id}">${template.name}</option>`);
+      }
+    },
+
+    runReportsBatch: (objects, batchSize = 5) => {
+      return Promise.map(
+        objects, 
+        async object => {
+          if (object._record_id) {
+            field = "_record_id";
+            id = object._record_id;
+          } else if (value.fulcrum_id) {
+            field = "fulcrum_id";
+            id = object._record_id;
+          }
+
+          var fileName = object._title || id;
+
+          var instance = $("#instance").val();
+
+          var templateID = $('#report-template-select').val();
+
+          const response = await fetch(`${instance}/reports.json`, {
+            method: "POST",
+            mode: "cors",
+            headers: {
+              "Content-Type": "application/json",
+              "X-ApiToken": atob(sessionStorage.getItem("fulcrum_query_token"))
+            },
+            body: JSON.stringify({
+              report: {
+                record_id: id,
+                template_id: templateID ? templateID : null,
+              }
+            }),
+          });
+
+          app.queryModule.reportsCompleted++;
+
+          $('#reports-label').html(app.queryModule.reportsCompleted + ' of ' + app.queryModule.reportsTotal + ' report(s) generated.');
+
+          return { ...(await response.json()).report, fileName };
+        },
+        {concurrency: batchSize}
+      );
+    },
+
+    runReports: function() {
+      var selections = $("#table").bootstrapTable("getSelections");
+
+      app.queryModule.reportsCompleted = 0;
+      app.queryModule.reportsZipped = 0;
+      app.queryModule.reportsTotal = selections.length;
+
+      $('#reports-label').html(app.queryModule.reportsCompleted + ' of ' + app.queryModule.reportsTotal + ' report(s) generated.');
+
+      app.queryModule.runReportsBatch(selections, 5).then((reports) => {
+        app.queryModule.downloadAndZip(reports);
+      });
+    },
+
+    download: (url) => {
+      return fetch(url, {
+        headers: {
+          "X-ApiToken": atob(sessionStorage.getItem("fulcrum_query_token"))
+        },
+      }).then(resp => resp.blob());
+    },
+    
+    downloadByGroup: (reports, batchSize = 5) => {
+      return Promise.map(
+        reports, 
+        async report => {
+          return { blob: await app.queryModule.download(report.url), ...report };
+        },
+        {concurrency: batchSize}
+      );
+    },
+    
+    exportZip: (reports) => {
+      const zip = JSZip();
+      reports.forEach((report, i) => {
+        zip.file(`${report.fileName}.pdf`, report.blob);
+        
+        app.queryModule.reportsZipped++;
+
+        $('#reports-label').html(app.queryModule.reportsZipped + ' of ' + app.queryModule.reportsTotal + ' report(s) archived.');
+      });
+
+      $('#reports-label').html(`Generating zip file with ${app.queryModule.reportsZipped} PDF(s)...`);
+
+      zip.generateAsync({type: 'blob'}).then(zipFile => {
+        const currentDate = new Date().getTime();
+        const fileName = `reports-${currentDate}.zip`;
+
+        $('#reports-label').html(`Generated zip file with ${app.queryModule.reportsZipped} PDF(s)...`);
+
+        setTimeout(() => {
+          $('#reports-label').html(`Export PDF Reports`);
+        }, 5000);
+
+        return saveAs(zipFile, fileName);
+      });
+    },
+    
+    downloadAndZip: (reports) => {
+      return app.queryModule.downloadByGroup(reports, 5).then(app.queryModule.exportZip);
     }
   }
-
 };

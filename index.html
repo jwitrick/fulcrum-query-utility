@@ -64,6 +64,10 @@
           </ul>
         </div>
         <button type="button" class="btn btn-danger" id="delete-records-btn" title="Delete selected records"><i class="glyphicon glyphicon-trash"></i>&nbsp;Delete&nbsp;<span class="badge" id="delete-count"></span></button>
+        <button type="button" class="btn btn-primary" id="report-records-btn" title="Download PDFs"><i class="glyphicon glyphicon-save"></i>&nbsp;<span id="reports-label">Export PDF Reports</span>&nbsp;<span class="badge" id="report-count"></span></button>
+        <div id="report-template" style="width: 200px; position: relative; top: 1px;">
+          <select class="form-control" id="report-template-select"></select>
+        </div>
         <span id="feature-count" class="text-muted" style="padding-left: 15px;"></span>
       </div>
       <table id="table"></table>
@@ -223,6 +227,8 @@
       </div>
     </div>
 
+    <script src="assets/vendor/bluebird.min.js"></script>
+    <script src="assets/vendor/jszip.js"></script>
     <script src="assets/vendor/jquery-2.2.4.min.js"></script>
     <script src="assets/vendor/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script src="assets/vendor/PapaParse-4.1.2/papaparse.min.js"></script>

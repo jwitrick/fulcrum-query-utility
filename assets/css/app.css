@@ -18,6 +18,12 @@ td {
 #delete-records-btn {
   display: none;
 }
+#report-records-btn {
+  display: none;
+}
+#report-template {
+  display: none;
+}
 #error-alert {
   display: none;
 }

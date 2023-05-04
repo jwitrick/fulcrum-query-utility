@@ -1,0 +1,11 @@
+{
+  "name": "fulcrum-query-utility",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:fulcrumapp/fulcrum-query-utility.git",
+  "author": "Zac McCormick <zac.mccormick@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
+}
