@@ -5,7 +5,6 @@ on:
       - gh-pages
     paths-ignore:
       - 'package.json'
-      - 'CHANGELOG.md'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,4 +20,4 @@ jobs:
         git-message: 'chore(release): {version}'
         preset: 'angular'
         tag-prefix: ''
-        output-file: 'CHANGELOG.md'
+        output-file: "false'
